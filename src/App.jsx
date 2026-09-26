@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import MetricCards from './components/MetricCards';
 import FilterBar from './components/FilterBar';
 import ExtensionCard from './components/ExtensionCard';
 import ExtensionTable from './components/ExtensionTable';
-import ExtensionDetailModal from './components/ExtensionDetailModal';
-import ComparisonArena from './components/ComparisonArena';
-import PublisherAnalytics from './components/PublisherAnalytics';
-import WatchlistView from './components/WatchlistView';
+
+// Code-split heavy, conditionally-rendered views so recharts & co. only load
+// when their tab/modal is actually opened (Core Web Vitals / initial bundle).
+const ExtensionDetailModal = lazy(() => import('./components/ExtensionDetailModal'));
+const ComparisonArena = lazy(() => import('./components/ComparisonArena'));
+const PublisherAnalytics = lazy(() => import('./components/PublisherAnalytics'));
+const WatchlistView = lazy(() => import('./components/WatchlistView'));
 import {
   searchExtensions,
   SortBy,
 } from './services/marketplaceApi';
+import useDocumentMeta from './hooks/useDocumentMeta';
 import {
   Loader2,
   AlertCircle,
@@ -21,6 +25,50 @@ import {
 } from 'lucide-react';
 
 const WATCHLIST_STORAGE_KEY = 'vscode_ext_watchlist_v1';
+
+// Per-tab titles & descriptions (Google re-reads these; social crawlers use
+// the static OG tags in index.html and don't run JS)
+const TAB_META = {
+  explore: {
+    title: 'ExtensionPulse — VS Code Extensions Analytics, Download Trends & Intelligence',
+    description:
+      'Discover live VS Code marketplace extension analytics, download velocity, real-time install stats, release cadence, publisher market share, and head-to-head comparisons.',
+  },
+  compare: {
+    title: 'Battle Arena — Compare VS Code Extensions Side-by-Side | ExtensionPulse',
+    description:
+      'Benchmark VS Code extensions head-to-head on downloads, trending velocity, and ratings in real time.',
+  },
+  publishers: {
+    title: 'Publisher Intelligence — VS Code Market Share & Portfolios | ExtensionPulse',
+    description:
+      'Analyze VS Code publishers by total installs, portfolio size, market share, and release cadence across their extensions.',
+  },
+  watchlist: {
+    title: 'Your Watchlist — Track VS Code Extensions | ExtensionPulse',
+    description:
+      'Monitor your saved VS Code extensions: install trends, update velocity, and exportable reports.',
+  },
+};
+
+// Shared fallback for lazily-loaded tab views
+function TabLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
+      <Loader2 className="w-9 h-9 animate-spin text-indigo-400" />
+      <p className="text-sm font-medium">Loading view...</p>
+    </div>
+  );
+}
+
+// Overlay fallback for the lazily-loaded detail modal
+function ModalLoader() {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0f17]/80 backdrop-blur-sm">
+      <Loader2 className="w-9 h-9 animate-spin text-indigo-400" />
+    </div>
+  );
+}
 
 export default function App() {
   // Navigation & View
@@ -156,6 +204,9 @@ export default function App() {
   const comparedIds = comparedExtensions.map((e) => e.id);
   const watchlistedIds = watchlist.map((e) => e.id);
 
+  // Sync tab title & meta description with the active view
+  useDocumentMeta(TAB_META[activeTab] || TAB_META.explore);
+
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       {/* Top Navigation */}
@@ -289,7 +340,8 @@ export default function App() {
 
         {/* TAB 2: BATTLE ARENA (COMPARISON) */}
         {activeTab === 'compare' && (
-          <ComparisonArena
+          <Suspense fallback={<TabLoader />}>
+            <ComparisonArena
             comparedExtensions={comparedExtensions}
             onRemoveFromCompare={(id) =>
               setComparedExtensions((prev) => prev.filter((e) => e.id !== id))
@@ -304,20 +356,24 @@ export default function App() {
             }}
             onSelectExtension={setSelectedExtension}
           />
+          </Suspense>
         )}
 
         {/* TAB 3: PUBLISHER INTELLIGENCE */}
         {activeTab === 'publishers' && (
-          <PublisherAnalytics
+          <Suspense fallback={<TabLoader />}>
+            <PublisherAnalytics
             selectedPublisherName={selectedPublisher}
             onSelectPublisher={setSelectedPublisher}
             onSelectExtension={setSelectedExtension}
           />
+          </Suspense>
         )}
 
         {/* TAB 4: WATCHLIST */}
         {activeTab === 'watchlist' && (
-          <WatchlistView
+          <Suspense fallback={<TabLoader />}>
+            <WatchlistView
             watchlist={watchlist}
             onRemoveFromWatchlist={(id) =>
               setWatchlist((prev) => prev.filter((e) => e.id !== id))
@@ -327,12 +383,14 @@ export default function App() {
             onCompareToggle={handleCompareToggle}
             comparedIds={comparedIds}
           />
+          </Suspense>
         )}
       </main>
 
       {/* Extension Deep Analytics Modal / Drawer */}
       {selectedExtension && (
-        <ExtensionDetailModal
+        <Suspense fallback={<ModalLoader />}>
+          <ExtensionDetailModal
           extension={selectedExtension}
           onClose={() => setSelectedExtension(null)}
           onCompareToggle={handleCompareToggle}
@@ -343,7 +401,8 @@ export default function App() {
             setSelectedPublisher(pubName);
             setActiveTab('publishers');
           }}
-        />
+          />
+        </Suspense>
       )}
 
       {/* Sleek Footer */}

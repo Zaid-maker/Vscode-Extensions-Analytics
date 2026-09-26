@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   X,
   Download,
@@ -35,10 +35,20 @@ import {
   analyzeReleaseCadence,
 } from '../utils/projections';
 import { generateBadges, generateCliCommand } from '../utils/badges';
-import DistributionChart from './Charts/DistributionChart';
-import VelocityChart from './Charts/VelocityChart';
-import ReleaseTimelineChart from './Charts/ReleaseTimelineChart';
-import GrowthProjectionChart from './Charts/GrowthProjectionChart';
+// Charts are code-split so recharts only loads when the detail modal opens
+const DistributionChart = lazy(() => import('./Charts/DistributionChart'));
+const VelocityChart = lazy(() => import('./Charts/VelocityChart'));
+const ReleaseTimelineChart = lazy(() => import('./Charts/ReleaseTimelineChart'));
+const GrowthProjectionChart = lazy(() => import('./Charts/GrowthProjectionChart'));
+
+// In-panel chart placeholder while the recharts chunk streams in
+function ChartLoader() {
+  return (
+    <div className="w-full h-56 flex items-center justify-center rounded-lg bg-slate-950/40 border border-slate-800/60">
+      <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+    </div>
+  );
+}
 import { getExtensionDetails } from '../services/marketplaceApi';
 
 export default function ExtensionDetailModal({
@@ -377,7 +387,9 @@ export default function ExtensionDetailModal({
                   <p className="text-[11px] text-slate-400 mb-3">
                     Breakdown of unique installs vs lifetime update packages delivered.
                   </p>
-                  <DistributionChart stats={extension.stats} />
+                  <Suspense fallback={<ChartLoader />}>
+                    <DistributionChart stats={extension.stats} />
+                  </Suspense>
                 </div>
 
                 {/* Velocity Momentum Chart */}
@@ -388,7 +400,9 @@ export default function ExtensionDetailModal({
                   <p className="text-[11px] text-slate-400 mb-3">
                     Daily, weekly, and monthly growth velocity indices.
                   </p>
-                  <VelocityChart stats={extension.stats} />
+                  <Suspense fallback={<ChartLoader />}>
+                    <VelocityChart stats={extension.stats} />
+                  </Suspense>
                 </div>
               </div>
 
@@ -472,7 +486,9 @@ export default function ExtensionDetailModal({
                     Based on current 7-day velocity model
                   </span>
                 </div>
-                <GrowthProjectionChart projections={projections} />
+                <Suspense fallback={<ChartLoader />}>
+                  <GrowthProjectionChart projections={projections} />
+                </Suspense>
               </div>
 
               {/* Projected Points Table */}
@@ -536,7 +552,9 @@ export default function ExtensionDetailModal({
                 <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                   Versions Released Over Time (By Year)
                 </h4>
-                <ReleaseTimelineChart cadenceData={cadence} />
+                <Suspense fallback={<ChartLoader />}>
+                  <ReleaseTimelineChart cadenceData={cadence} />
+                </Suspense>
               </div>
 
               {/* Version History Table */}
