@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Map Tailwind's font-sans/font-mono to the brand fonts (otherwise the
+   default utility stacks win and Inter/JetBrains Mono never apply) */
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 @layer base {
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -20,6 +27,12 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Skip layout/paint for offscreen extension cards (Core Web Vitals) */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px;
 }
 
 /* Custom scrollbars */
