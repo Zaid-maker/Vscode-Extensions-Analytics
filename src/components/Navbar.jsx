@@ -31,7 +31,8 @@ export default function Navbar({
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-[#0b0f17]/90 backdrop-blur-xl transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        {/* Wraps to two rows on mobile: logo+actions, then scrollable tabs */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 py-2 md:py-0 md:h-16">
           {/* Logo & App Name */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-500 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/20">
@@ -48,14 +49,14 @@ export default function Navbar({
                   VS Code API
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
+              <p className="text-[11px] text-slate-400 font-medium hidden md:block">
                 Visual Studio Marketplace Analytics & Download Velocity
               </p>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <nav className="flex items-center gap-1 sm:gap-2">
+          {/* Navigation Tabs — scrollable strip on mobile */}
+          <nav className="order-3 md:order-none w-full md:w-auto flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 py-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -63,16 +64,16 @@ export default function Navbar({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                     isActive
                       ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-sm shadow-indigo-500/10'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-400' : 'text-slate-400'}`} />
-                  <span className="hidden md:inline">{item.label}</span>
+                  <span>{item.label}</span>
                   {item.badge !== null && item.badge !== undefined && (
-                    <span className="ml-1 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-indigo-600 text-white font-mono">
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-indigo-600 text-white font-mono">
                       {item.badge}
                     </span>
                   )}
@@ -82,7 +83,7 @@ export default function Navbar({
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="order-2 md:order-none flex items-center gap-2">
             <button
               onClick={onRefresh}
               disabled={isRefreshing}

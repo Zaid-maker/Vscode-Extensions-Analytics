@@ -577,7 +577,7 @@ export default function ExtensionDetailModal({
                         <span className="font-mono font-bold text-white">
                           v{v.version}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
                           {v.targetPlatform}
                         </span>
                       </div>

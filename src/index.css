@@ -12,6 +12,16 @@
   }
 }
 
+/* Hide scrollbars on horizontal chip/tab strips while keeping scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 7px;

@@ -88,7 +88,7 @@ export default function ExtensionTable({
                           <span className="font-bold text-slate-100 group-hover:text-indigo-400 transition-colors truncate max-w-[200px] sm:max-w-xs">
                             {ext.displayName}
                           </span>
-                          <span className="text-[10px] text-slate-400 font-mono px-1 py-0.2 rounded bg-slate-800">
+                          <span className="text-[10px] text-slate-400 font-mono px-1 py-0.5 rounded bg-slate-800">
                             v{ext.latestVersion}
                           </span>
                         </div>

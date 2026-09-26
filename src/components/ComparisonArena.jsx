@@ -198,12 +198,11 @@ export default function ComparisonArena({
             </button>
           </div>
 
-          {/* Side by side cards */}
+          {/* Side by side cards — static class names so Tailwind can see them */}
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(
-              comparedExtensions.length,
-              4
-            )} gap-4`}
+            className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${
+              comparedExtensions.length >= 3 ? 'lg:grid-cols-3' : ''
+            } ${comparedExtensions.length >= 4 ? 'xl:grid-cols-4' : ''}`}
           >
             {comparedExtensions.map((ext, idx) => {
               const isDownloadsWinner = ext.id === mostInstallsId;
