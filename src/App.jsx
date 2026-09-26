@@ -169,6 +169,11 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Visually-hidden page heading: SEO + screen reader anchor */}
+        <h1 className="sr-only">
+          ExtensionPulse — VS Code Extension Analytics, Download Trends &amp; Comparisons
+        </h1>
+
         {/* TAB 1: EXPLORER & LEADERBOARD */}
         {activeTab === 'explore' && (
           <div>
