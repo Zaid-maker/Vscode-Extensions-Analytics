@@ -4,6 +4,7 @@ import MetricCards from './components/MetricCards';
 import FilterBar from './components/FilterBar';
 import ExtensionCard from './components/ExtensionCard';
 import ExtensionTable from './components/ExtensionTable';
+import LazyErrorBoundary from './components/LazyErrorBoundary';
 
 // Code-split heavy, conditionally-rendered views so recharts & co. only load
 // when their tab/modal is actually opened (Core Web Vitals / initial bundle).
@@ -340,8 +341,9 @@ export default function App() {
 
         {/* TAB 2: BATTLE ARENA (COMPARISON) */}
         {activeTab === 'compare' && (
-          <Suspense fallback={<TabLoader />}>
-            <ComparisonArena
+          <LazyErrorBoundary>
+            <Suspense fallback={<TabLoader />}>
+              <ComparisonArena
             comparedExtensions={comparedExtensions}
             onRemoveFromCompare={(id) =>
               setComparedExtensions((prev) => prev.filter((e) => e.id !== id))
@@ -356,24 +358,28 @@ export default function App() {
             }}
             onSelectExtension={setSelectedExtension}
           />
-          </Suspense>
+            </Suspense>
+          </LazyErrorBoundary>
         )}
 
         {/* TAB 3: PUBLISHER INTELLIGENCE */}
         {activeTab === 'publishers' && (
-          <Suspense fallback={<TabLoader />}>
-            <PublisherAnalytics
+          <LazyErrorBoundary>
+            <Suspense fallback={<TabLoader />}>
+              <PublisherAnalytics
             selectedPublisherName={selectedPublisher}
             onSelectPublisher={setSelectedPublisher}
             onSelectExtension={setSelectedExtension}
           />
-          </Suspense>
+            </Suspense>
+          </LazyErrorBoundary>
         )}
 
         {/* TAB 4: WATCHLIST */}
         {activeTab === 'watchlist' && (
-          <Suspense fallback={<TabLoader />}>
-            <WatchlistView
+          <LazyErrorBoundary>
+            <Suspense fallback={<TabLoader />}>
+              <WatchlistView
             watchlist={watchlist}
             onRemoveFromWatchlist={(id) =>
               setWatchlist((prev) => prev.filter((e) => e.id !== id))
@@ -383,14 +389,16 @@ export default function App() {
             onCompareToggle={handleCompareToggle}
             comparedIds={comparedIds}
           />
-          </Suspense>
+            </Suspense>
+          </LazyErrorBoundary>
         )}
       </main>
 
       {/* Extension Deep Analytics Modal / Drawer */}
       {selectedExtension && (
-        <Suspense fallback={<ModalLoader />}>
-          <ExtensionDetailModal
+        <LazyErrorBoundary>
+          <Suspense fallback={<ModalLoader />}>
+            <ExtensionDetailModal
           extension={selectedExtension}
           onClose={() => setSelectedExtension(null)}
           onCompareToggle={handleCompareToggle}
@@ -402,7 +410,8 @@ export default function App() {
             setActiveTab('publishers');
           }}
           />
-        </Suspense>
+          </Suspense>
+        </LazyErrorBoundary>
       )}
 
       {/* Sleek Footer */}

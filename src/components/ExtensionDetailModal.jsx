@@ -50,6 +50,7 @@ function ChartLoader() {
   );
 }
 import { getExtensionDetails } from '../services/marketplaceApi';
+import LazyErrorBoundary from './LazyErrorBoundary';
 
 export default function ExtensionDetailModal({
   extension: initialExtension,
@@ -387,9 +388,11 @@ export default function ExtensionDetailModal({
                   <p className="text-[11px] text-slate-400 mb-3">
                     Breakdown of unique installs vs lifetime update packages delivered.
                   </p>
-                  <Suspense fallback={<ChartLoader />}>
-                    <DistributionChart stats={extension.stats} />
-                  </Suspense>
+                  <LazyErrorBoundary compact>
+                    <Suspense fallback={<ChartLoader />}>
+                      <DistributionChart stats={extension.stats} />
+                    </Suspense>
+                  </LazyErrorBoundary>
                 </div>
 
                 {/* Velocity Momentum Chart */}
@@ -400,9 +403,11 @@ export default function ExtensionDetailModal({
                   <p className="text-[11px] text-slate-400 mb-3">
                     Daily, weekly, and monthly growth velocity indices.
                   </p>
-                  <Suspense fallback={<ChartLoader />}>
-                    <VelocityChart stats={extension.stats} />
-                  </Suspense>
+                  <LazyErrorBoundary compact>
+                    <Suspense fallback={<ChartLoader />}>
+                      <VelocityChart stats={extension.stats} />
+                    </Suspense>
+                  </LazyErrorBoundary>
                 </div>
               </div>
 
@@ -486,9 +491,11 @@ export default function ExtensionDetailModal({
                     Based on current 7-day velocity model
                   </span>
                 </div>
-                <Suspense fallback={<ChartLoader />}>
-                  <GrowthProjectionChart projections={projections} />
-                </Suspense>
+                <LazyErrorBoundary compact>
+                  <Suspense fallback={<ChartLoader />}>
+                    <GrowthProjectionChart projections={projections} />
+                  </Suspense>
+                </LazyErrorBoundary>
               </div>
 
               {/* Projected Points Table */}
@@ -552,9 +559,11 @@ export default function ExtensionDetailModal({
                 <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                   Versions Released Over Time (By Year)
                 </h4>
-                <Suspense fallback={<ChartLoader />}>
-                  <ReleaseTimelineChart cadenceData={cadence} />
-                </Suspense>
+                <LazyErrorBoundary compact>
+                  <Suspense fallback={<ChartLoader />}>
+                    <ReleaseTimelineChart cadenceData={cadence} />
+                  </Suspense>
+                </LazyErrorBoundary>
               </div>
 
               {/* Version History Table */}
