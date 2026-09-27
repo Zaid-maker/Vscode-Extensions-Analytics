@@ -4,11 +4,13 @@ import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    babel({ presets: [reactCompilerPreset()] }),
-    tailwindcss(),
+    // The test runner needs the JSX transform only; compiler + CSS are noise there
+    ...(mode !== 'test'
+      ? [babel({ presets: [reactCompilerPreset()] }), tailwindcss()]
+      : []),
   ],
   server: {
     proxy: {
@@ -18,6 +20,12 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/marketplace/, '')
       }
     }
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js',
+    css: false
   }
-})
+}))
 
