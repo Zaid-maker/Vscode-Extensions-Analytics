@@ -2,6 +2,8 @@
 
 A real-time analytics dashboard and competitive intelligence suite for the **Visual Studio Code Marketplace**. Track extension download velocity, analyze release cadence, forecast milestone growth, benchmark extensions side-by-side in the Battle Arena, and inspect publisher portfolios.
 
+[![CI](https://github.com/Zaid-maker/Vscode-Extensions-Analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/Zaid-maker/Vscode-Extensions-Analytics/actions/workflows/ci.yml)
+
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.3-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
