@@ -72,3 +72,5 @@ jobs:
           name: lighthouse-reports
           path: .lighthouseci/
           retention-days: 7
+          # .lighthouseci is a hidden directory, excluded by default in v4
+          include-hidden-files: true
