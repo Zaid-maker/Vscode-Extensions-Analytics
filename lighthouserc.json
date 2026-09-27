@@ -24,6 +24,10 @@
         "modern-image-formats": "off",
         "speed-index": "off"
       }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
     }
   }
 }
