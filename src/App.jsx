@@ -118,6 +118,24 @@ export default function App() {
     }
   }, [watchlist]);
 
+  // Warm the lazy tab chunks once the browser is idle: first tab switch is
+  // instant instead of paying the fetch + parse while the spinner shows.
+  useEffect(() => {
+    const warm = (loader) => {
+      loader().catch(() => {}); // network hiccups here are fine; the error boundary still covers real failures
+    };
+    if ('requestIdleCallback' in window) {
+      const id = requestIdleCallback(() => {
+        warm(ExtensionDetailModal); warm(ComparisonArena); warm(PublisherAnalytics); warm(WatchlistView);
+      }, { timeout: 4000 });
+      return () => cancelIdleCallback(id);
+    }
+    const t = setTimeout(() => {
+      warm(ExtensionDetailModal); warm(ComparisonArena); warm(PublisherAnalytics); warm(WatchlistView);
+    }, 2500);
+    return () => clearTimeout(t);
+  }, []);
+
   // Fetch extensions query
   const loadExtensions = useCallback(
     async (resetPage = true) => {
