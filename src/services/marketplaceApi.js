@@ -3,8 +3,65 @@
 const MARKETPLACE_DIRECT_URL = 'https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery';
 const MARKETPLACE_PROXY_URL = '/api/marketplace/_apis/public/gallery/extensionquery';
 
-// In-memory cache for API queries
-const queryCache = new Map();
+// In-memory response cache.
+// - Fresh (< TTL): served without any network call.
+// - Stale (< STALE): served only as an emergency fallback when the API is
+//   unavailable (VS Marketplace rate-limits aggressively with 403/429),
+//   so a deploy of transient failures can never blank the UI.
+const CACHE_TTL_MS = 3 * 60 * 1000;
+const CACHE_STALE_MS = 24 * 60 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 50;
+const RATE_LIMIT_RETRY_DELAY_MS = 1500;
+const RATE_LIMIT_MAX_ATTEMPTS = 2; // per endpoint
+const RATE_LIMIT_STATUSES = new Set([403, 429]);
+
+const queryCache = new Map(); // cacheKey -> { timestamp, data }
+const inFlightQueries = new Map(); // cacheKey -> Promise (single-flight)
+
+function getCached(cacheKey, maxAgeMs) {
+  const cached = queryCache.get(cacheKey);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp > maxAgeMs) return null;
+  return cached.data;
+}
+
+function setCached(cacheKey, data) {
+  // Cheap insertion-order eviction; queries are small, the cap is just
+  // a guard against unbounded growth across a long browsing session.
+  if (queryCache.size >= MAX_CACHE_ENTRIES) {
+    queryCache.delete(queryCache.keys().next().value);
+  }
+  queryCache.set(cacheKey, { timestamp: Date.now(), data });
+}
+
+/** Test/utility hook to force the next query to hit the network. */
+export function clearMarketplaceCache() {
+  queryCache.clear();
+  inFlightQueries.clear();
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function postWithRateLimitRetry(url, headers, bodyPayload) {
+  for (let attempt = 1; attempt <= RATE_LIMIT_MAX_ATTEMPTS; attempt++) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(bodyPayload),
+    });
+
+    if (RATE_LIMIT_STATUSES.has(response.status) && attempt < RATE_LIMIT_MAX_ATTEMPTS) {
+      const retryAfter = Number(response.headers.get('retry-after'));
+      const delayMs =
+        Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(retryAfter * 1000, 5000)
+          : RATE_LIMIT_RETRY_DELAY_MS;
+      await sleep(delayMs);
+      continue;
+    }
+    return response;
+  }
+}
 
 /**
  * FilterType constants for VS Code gallery API
@@ -182,66 +239,82 @@ export function normalizeExtension(raw) {
 }
 
 /**
- * Execute query against VS Code marketplace API with automatic fallback
+ * Execute query against VS Code marketplace API.
+ *
+ * Resilience layers, in order:
+ * 1. Fresh cache hit (no network)
+ * 2. Single-flight dedupe of concurrent identical queries
+ * 3. Dev proxy endpoint, retrying 403/429 once with backoff
+ * 4. Direct marketplace endpoint, same retry policy
+ * 5. Stale cache fallback (up to 24h old) when every endpoint fails
  */
-export async function executeMarketplaceQuery(bodyPayload) {
+export async function executeMarketplaceQuery(bodyPayload, { force = false } = {}) {
   const cacheKey = JSON.stringify(bodyPayload);
-  if (queryCache.has(cacheKey)) {
-    const cached = queryCache.get(cacheKey);
-    // Cache valid for 3 minutes
-    if (Date.now() - cached.timestamp < 180000) {
-      return cached.data;
+
+  if (!force) {
+    const fresh = getCached(cacheKey, CACHE_TTL_MS);
+    if (fresh) return fresh;
+
+    if (inFlightQueries.has(cacheKey)) {
+      return inFlightQueries.get(cacheKey);
     }
   }
 
-  const headers = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json;api-version=3.0-preview.1',
-  };
+  const promise = (async () => {
+    const headers = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json;api-version=3.0-preview.1',
+    };
 
-  let response;
-  // Try proxy first if on localhost, else fallback to direct
+    let lastError = null;
+
+    // Endpoint chain: dev proxy first (avoids CORS/rate-limit coupling),
+    // then the public endpoint directly.
+    for (const url of [MARKETPLACE_PROXY_URL, MARKETPLACE_DIRECT_URL]) {
+      try {
+        const response = await postWithRateLimitRetry(url, headers, bodyPayload);
+        if (!response.ok) {
+          lastError = new Error(`Marketplace API failed with status ${response.status}`);
+          continue; // fall through to the next endpoint / stale fallback
+        }
+
+        const data = await response.json();
+        const rawExtensions = data.results?.[0]?.extensions || [];
+        const totalCount =
+          data.results?.[0]?.resultMetadata?.[0]?.metadataItems?.[0]?.count ||
+          rawExtensions.length;
+
+        const result = {
+          extensions: rawExtensions.map(normalizeExtension).filter(Boolean),
+          totalCount,
+        };
+
+        setCached(cacheKey, result);
+        return result;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    // Every endpoint failed: serve yesterday's data rather than an error screen
+    const stale = getCached(cacheKey, CACHE_STALE_MS);
+    if (stale) {
+      console.warn(
+        'Marketplace API unavailable; serving cached results from',
+        new Date(queryCache.get(cacheKey).timestamp).toISOString()
+      );
+      return stale;
+    }
+
+    throw lastError || new Error('Marketplace API request failed');
+  })();
+
+  inFlightQueries.set(cacheKey, promise);
   try {
-    response = await fetch(MARKETPLACE_PROXY_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(bodyPayload),
-    });
-    if (!response.ok) {
-      throw new Error(`Proxy error ${response.status}`);
-    }
-  } catch {
-    // Fallback to direct marketplace endpoint
-    response = await fetch(MARKETPLACE_DIRECT_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(bodyPayload),
-    });
+    return await promise;
+  } finally {
+    inFlightQueries.delete(cacheKey);
   }
-
-  if (!response.ok) {
-    throw new Error(`Marketplace API failed with status ${response.status}`);
-  }
-
-  const data = await response.json();
-  const rawExtensions = data.results?.[0]?.extensions || [];
-  const totalCount =
-    data.results?.[0]?.resultMetadata?.[0]?.metadataItems?.[0]?.count ||
-    rawExtensions.length;
-
-  const normalized = rawExtensions.map(normalizeExtension).filter(Boolean);
-
-  const result = {
-    extensions: normalized,
-    totalCount,
-  };
-
-  queryCache.set(cacheKey, {
-    timestamp: Date.now(),
-    data: result,
-  });
-
-  return result;
 }
 
 /**
@@ -254,6 +327,7 @@ export async function searchExtensions({
   sortOrder = 0,
   pageNumber = 1,
   pageSize = 24,
+  force = false,
 } = {}) {
   const criteria = [
     { filterType: FilterType.TARGET, value: 'Microsoft.VisualStudio.Code' },
@@ -280,7 +354,7 @@ export async function searchExtensions({
     flags: Flags.SUMMARY,
   };
 
-  return executeMarketplaceQuery(payload);
+  return executeMarketplaceQuery(payload, { force });
 }
 
 /**

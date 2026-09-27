@@ -8,10 +8,16 @@ import LazyErrorBoundary from './components/LazyErrorBoundary';
 
 // Code-split heavy, conditionally-rendered views so recharts & co. only load
 // when their tab/modal is actually opened (Core Web Vitals / initial bundle).
-const ExtensionDetailModal = lazy(() => import('./components/ExtensionDetailModal'));
-const ComparisonArena = lazy(() => import('./components/ComparisonArena'));
-const PublisherAnalytics = lazy(() => import('./components/PublisherAnalytics'));
-const WatchlistView = lazy(() => import('./components/WatchlistView'));
+// Factories are kept separately so the idle prefetch can call them directly.
+const loadExtensionDetailModal = () => import('./components/ExtensionDetailModal');
+const loadComparisonArena = () => import('./components/ComparisonArena');
+const loadPublisherAnalytics = () => import('./components/PublisherAnalytics');
+const loadWatchlistView = () => import('./components/WatchlistView');
+
+const ExtensionDetailModal = lazy(loadExtensionDetailModal);
+const ComparisonArena = lazy(loadComparisonArena);
+const PublisherAnalytics = lazy(loadPublisherAnalytics);
+const WatchlistView = lazy(loadWatchlistView);
 import {
   searchExtensions,
   SortBy,
@@ -121,17 +127,17 @@ export default function App() {
   // Warm the lazy tab chunks once the browser is idle: first tab switch is
   // instant instead of paying the fetch + parse while the spinner shows.
   useEffect(() => {
-    const warm = (loader) => {
-      loader().catch(() => {}); // network hiccups here are fine; the error boundary still covers real failures
+    const warm = (load) => {
+      load().catch(() => {}); // network hiccups here are fine; the error boundary still covers real failures
     };
     if ('requestIdleCallback' in window) {
       const id = requestIdleCallback(() => {
-        warm(ExtensionDetailModal); warm(ComparisonArena); warm(PublisherAnalytics); warm(WatchlistView);
+        warm(loadExtensionDetailModal); warm(loadComparisonArena); warm(loadPublisherAnalytics); warm(loadWatchlistView);
       }, { timeout: 4000 });
       return () => cancelIdleCallback(id);
     }
     const t = setTimeout(() => {
-      warm(ExtensionDetailModal); warm(ComparisonArena); warm(PublisherAnalytics); warm(WatchlistView);
+      warm(loadExtensionDetailModal); warm(loadComparisonArena); warm(loadPublisherAnalytics); warm(loadWatchlistView);
     }, 2500);
     return () => clearTimeout(t);
   }, []);
@@ -188,10 +194,26 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [loadExtensions, searchQuery]);
 
-  // Manual refresh handler
+  // Manual refresh handler — bypasses the TTL cache so the button
+  // always means "go get the latest from the marketplace"
   const handleRefresh = () => {
     setIsRefreshing(true);
-    loadExtensions(true);
+    searchExtensions({
+      searchText: searchQuery,
+      category: selectedCategory,
+      sortBy,
+      pageNumber: 1,
+      pageSize: 24,
+      force: true,
+    })
+      .then((res) => {
+        setExtensions(res.extensions);
+        setPageNumber(1);
+        setTotalCount(res.totalCount);
+        setError(null);
+      })
+      .catch(() => setError('Unable to fetch extensions from the VS Code Marketplace. Please retry.'))
+      .finally(() => setIsRefreshing(false));
   };
 
   // Compare toggling
