@@ -16,6 +16,7 @@ import {
   formatRelativeDate,
   formatTrendPercent,
 } from '../utils/formatters';
+import { extensionPath } from '../lib/routes';
 
 export default function ExtensionCard({
   extension,
@@ -37,9 +38,15 @@ export default function ExtensionCard({
 
   const trendingPositive = (extension.stats.trendingWeekly || 0) > 0;
 
+  // Real anchor so search engines can crawl per-extension pages from the grid
   return (
-    <div
-      onClick={() => onSelect(extension)}
+    <a
+      href={extensionPath(extension.id)}
+      onClick={(e) => {
+        // In-app: open the modal without a page reload (and without clobbering SPA state)
+        e.preventDefault();
+        onSelect(extension);
+      }}
       className="group glass-panel cv-auto rounded-2xl p-4 sm:p-5 flex flex-col justify-between cursor-pointer border border-slate-800/80 hover:border-indigo-500/40 hover:bg-slate-900/90 transition-all duration-300 relative shadow-lg shadow-black/20 hover:shadow-indigo-500/10 hover:-translate-y-1"
     >
       {/* Top Header: Icon + Name + Quick Actions */}
@@ -205,6 +212,6 @@ export default function ExtensionCard({
           </button>
         </div>
       </div>
-    </div>
+    </a>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import MetricCards from './components/MetricCards';
 import FilterBar from './components/FilterBar';
@@ -21,8 +21,10 @@ const WatchlistView = lazy(loadWatchlistView);
 import {
   searchExtensions,
   SortBy,
+  getExtensionDetails,
 } from './services/marketplaceApi';
 import useDocumentMeta from './hooks/useDocumentMeta';
+import { extensionIdFromPath, extensionPath } from './lib/routes';
 import {
   Loader2,
   AlertCircle,
@@ -81,6 +83,9 @@ export default function App() {
   // Navigation & View
   const [activeTab, setActiveTab] = useState('explore'); // 'explore' | 'compare' | 'publishers' | 'watchlist'
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+  // Deep-link support: a URL like /extension/GitHub.copilot opens the detail modal directly
+  const [initialExtensionId] = useState(() => extensionIdFromPath(window.location.pathname));
+  const deepLinkAttemptedRef = useRef(false);
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,6 +103,35 @@ export default function App() {
 
   // Deep Dive & Modal states
   const [selectedExtension, setSelectedExtension] = useState(null);
+
+  // Central URL ↔ modal state management. Every modal entry point (card grid,
+  // table, battle arena, publishers, watchlist, deep links) funnels through here
+  // so the address bar always holds a shareable /extension/<id> URL while open.
+  const historyPushedRef = useRef(false);
+  const openExtension = useCallback((ext) => {
+    if (!ext) return;
+    const target = extensionPath(ext.id);
+    historyPushedRef.current = window.location.pathname !== target;
+    if (historyPushedRef.current) {
+      window.history.pushState({ extension: ext.id }, '', target);
+    }
+    setSelectedExtension(ext);
+  }, []);
+
+  const closeExtension = useCallback(() => {
+    setSelectedExtension(null);
+    if (window.location.pathname !== '/') {
+      if (historyPushedRef.current) window.history.back();
+      else window.history.replaceState({}, '', '/');
+    }
+    historyPushedRef.current = false;
+  }, []);
+
+  // Mirror for listeners registered once (popstate) that need the latest value
+  const selectedExtensionRef = useRef(null);
+  useEffect(() => {
+    selectedExtensionRef.current = selectedExtension;
+  }, [selectedExtension]);
 
   // Comparison Arena state (up to 4 extensions)
   const [comparedExtensions, setComparedExtensions] = useState([]);
@@ -182,7 +216,51 @@ export default function App() {
     [searchQuery, selectedCategory, sortBy, pageNumber]
   );
 
-  // Trigger search on filter changes with debounce for text input
+  // Resolve a deep-linked /extension/:id URL: fetch it and open the modal. The
+  // URL stays on /extension/... while the modal is open; closing it returns to
+  // the homepage view (history.back when we pushed, else canonical home).
+  useEffect(() => {
+    if (!initialExtensionId || deepLinkAttemptedRef.current) return;
+    let cancelled = false;
+    getExtensionDetails(initialExtensionId)
+      .then((ext) => {
+        // Guard set on resolution, not on entry, so StrictMode's dev
+        // double-mount gets a second fetch instead of a dead first one
+        if (deepLinkAttemptedRef.current) return;
+        if (ext) {
+          deepLinkAttemptedRef.current = true;
+          setSelectedExtension(ext);
+        } else {
+          deepLinkAttemptedRef.current = true;
+          // Unknown extension — don't strand the user on a URL that renders nothing
+          window.history.replaceState({}, '', '/');
+        }
+      })
+      .catch((err) => console.warn('Deep-link fetch failed:', err));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Browser Back/Forward while the modal is involved: keep state in sync with the URL
+  useEffect(() => {
+    const onPopState = () => {
+      const id = extensionIdFromPath(window.location.pathname);
+      if (id) {
+        historyPushedRef.current = false;
+        if (!selectedExtensionRef.current || selectedExtensionRef.current.id !== id) {
+          getExtensionDetails(id)
+            .then((ext) => ext && setSelectedExtension(ext))
+            .catch(() => {});
+        }
+      } else if (selectedExtensionRef.current) {
+        setSelectedExtension(null);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
   useEffect(() => {
     const timer = setTimeout(
       () => {
@@ -247,6 +325,23 @@ export default function App() {
 
   // Sync tab title & meta description with the active view
   useDocumentMeta(TAB_META[activeTab] || TAB_META.explore);
+
+  // While an extension modal is open, give the tab a crawlable per-extension
+  // title/description; restore the tab meta when it closes.
+  useEffect(() => {
+    if (!selectedExtension) return undefined;
+    const prevTitle = document.title;
+    const meta = document.querySelector('meta[name="description"]');
+    const prevDescription = meta?.getAttribute('content') || null;
+    document.title = `${selectedExtension.displayName} (${selectedExtension.id}) — VS Code Extension Analytics | ExtensionPulse`;
+    if (meta && selectedExtension.description) {
+      meta.setAttribute('content', selectedExtension.description);
+    }
+    return () => {
+      document.title = prevTitle;
+      if (meta && prevDescription) meta.setAttribute('content', prevDescription);
+    };
+  }, [selectedExtension]);
 
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
@@ -332,7 +427,7 @@ export default function App() {
                   <ExtensionCard
                     key={ext.id}
                     extension={ext}
-                    onSelect={setSelectedExtension}
+                    onSelect={openExtension}
                     onCompareToggle={handleCompareToggle}
                     isCompared={comparedIds.includes(ext.id)}
                     isWatchlisted={watchlistedIds.includes(ext.id)}
@@ -343,7 +438,7 @@ export default function App() {
             ) : (
               <ExtensionTable
                 extensions={extensions}
-                onSelect={setSelectedExtension}
+                onSelect={openExtension}
                 onCompareToggle={handleCompareToggle}
                 comparedIds={comparedIds}
                 watchlistedIds={watchlistedIds}
@@ -396,7 +491,7 @@ export default function App() {
                 );
               }
             }}
-            onSelectExtension={setSelectedExtension}
+            onSelectExtension={openExtension}
           />
             </Suspense>
           </LazyErrorBoundary>
@@ -409,7 +504,7 @@ export default function App() {
               <PublisherAnalytics
             selectedPublisherName={selectedPublisher}
             onSelectPublisher={setSelectedPublisher}
-            onSelectExtension={setSelectedExtension}
+            onSelectExtension={openExtension}
           />
             </Suspense>
           </LazyErrorBoundary>
@@ -425,7 +520,7 @@ export default function App() {
               setWatchlist((prev) => prev.filter((e) => e.id !== id))
             }
             onClearWatchlist={() => setWatchlist([])}
-            onSelectExtension={setSelectedExtension}
+            onSelectExtension={openExtension}
             onCompareToggle={handleCompareToggle}
             comparedIds={comparedIds}
           />
@@ -440,7 +535,7 @@ export default function App() {
           <Suspense fallback={<ModalLoader />}>
             <ExtensionDetailModal
           extension={selectedExtension}
-          onClose={() => setSelectedExtension(null)}
+          onClose={closeExtension}
           onCompareToggle={handleCompareToggle}
           isCompared={comparedIds.includes(selectedExtension.id)}
           isWatchlisted={watchlistedIds.includes(selectedExtension.id)}
