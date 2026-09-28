@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/update-sitemap.mjs",
     "build": "vite build",
     "lint": "oxlint",
     "test": "vitest run",
