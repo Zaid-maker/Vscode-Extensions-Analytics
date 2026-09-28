@@ -2,6 +2,8 @@
 
 A real-time analytics dashboard and competitive intelligence suite for the **Visual Studio Code Marketplace**. Track extension download velocity, analyze release cadence, forecast milestone growth, benchmark extensions side-by-side in the Battle Arena, and inspect publisher portfolios.
 
+[![Live Site](https://img.shields.io/badge/Live_Site-vscode--extensions--analytics.vercel.app-6366f1?style=for-the-badge&logo=vercel&logoColor=white)](https://vscode-extensions-analytics.vercel.app)
+
 [![CI](https://github.com/Zaid-maker/Vscode-Extensions-Analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/Zaid-maker/Vscode-Extensions-Analytics/actions/workflows/ci.yml)
 
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
@@ -69,7 +71,7 @@ A real-time analytics dashboard and competitive intelligence suite for the **Vis
 | **Tailwind CSS v4** | Modern styling, glassmorphism, and responsive layout |
 | **Recharts** | Interactive charts (Pie/Donut, Bar, Area, and Progression) |
 | **Lucide React** | Clean, consistent icons |
-| **Bun** | High-performance runtime and package manager |
+| **Vitest** | Unit & component test suite |
 
 ---
 
@@ -112,10 +114,16 @@ vscode-extensions-analytics/
 
 ---
 
+## 🌐 Try It Live
+
+No setup needed — the production app is hosted at **[https://vscode-extensions-analytics.vercel.app](https://vscode-extensions-analytics.vercel.app)**.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ or [Bun](https://bun.sh/) 1.1+ installed on your machine.
+- Node.js 18+ with npm installed on your machine.
 
 ### Installation
 
@@ -126,26 +134,24 @@ vscode-extensions-analytics/
    ```
 
 2. **Install dependencies:**
-   Using Bun:
-   ```bash
-   bun install
-   ```
-   Or using npm:
    ```bash
    npm install
    ```
 
 3. **Start the development server:**
    ```bash
-   bun run dev
-   # or: npm run dev
+   npm run dev
    ```
    The application will be running at `http://localhost:5173`.
 
-4. **Build for production:**
+4. **Run tests:**
    ```bash
-   bun run build
-   # or: npm run build
+   npm test
+   ```
+
+5. **Build for production:**
+   ```bash
+   npm run build
    ```
 
 ---
@@ -157,7 +163,7 @@ The tool directly interfaces with the **Visual Studio Code Marketplace Gallery Q
 - **Method**: `POST`
 - **Flags**: `914` (`0x200` IncludeLatestVersionOnly, `0x100` IncludeStatistics, `0x80` IncludeAssetUri, `0x10` IncludeVersionProperties, `0x2` IncludeFiles).
 - **Proxy & Fallback**: Configured with a local Vite dev proxy (`/api/marketplace`) for seamless CORS handling, with automatic fallback directly to the official marketplace API endpoint.
-- **In-Memory Caching**: Repeated queries are cached for 3 minutes to optimize network requests and ensure snappy navigation.
+- **Resilient Caching**: 3-minute TTL cache with single-flight dedupe, retry with backoff on rate limits, and stale-on-error fallback (up to 24h) so API outages never blank the UI. The manual Refresh button bypasses the TTL.
 
 ---
 
