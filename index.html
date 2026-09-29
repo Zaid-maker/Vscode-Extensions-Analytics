@@ -82,8 +82,42 @@
     </script>
 
     <!-- Fonts are self-hosted via @fontsource packages, imported in src/main.jsx -->
+    <style>
+      /* Prerendered /best/ listicle pages: plain CSS so the static HTML is
+         presentable for crawlers/no-JS, then hidden once React mounts. */
+      #prerender-list {
+        max-width: 52rem;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem 3rem;
+        font-family: system-ui, sans-serif;
+        line-height: 1.6;
+      }
+      #prerender-list h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 1rem; }
+      #prerender-list .intro { color: #94a3b8; margin: 0 0 .25rem; }
+      #prerender-list .updated { color: #64748b; font-size: .8rem; margin: 0 0 1.5rem; }
+      #prerender-list ol { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+      #prerender-list li { border: 1px solid #1e293b; border-radius: .75rem; margin-bottom: .6rem; background: rgba(15, 23, 42, .6); }
+      #prerender-list li a { display: grid; grid-template-columns: 2.2rem 1fr; gap: .1rem .6rem; padding: .8rem 1rem; color: inherit; text-decoration: none; }
+      #prerender-list .rank { grid-row: span 3; font-weight: 700; color: #818cf8; font-size: 1.1rem; }
+      #prerender-list .name { font-weight: 600; color: #e2e8f0; }
+      #prerender-list .stats { color: #818cf8; font-size: .8rem; }
+      #prerender-list .desc { color: #94a3b8; font-size: .85rem; }
+      #prerender-list li a:hover .name { color: #a5b4fc; }
+      body:has(#root:not(:empty)) #prerender-list { display: none; }
+    </style>
   </head>
   <body class="bg-[#0b0f17] text-slate-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white">
+    <!-- Static crawlable nav (hidden once CSS loads): links the prerendered
+         listicle pages from the homepage's raw HTML for crawlers and no-JS. -->
+    <nav aria-hidden="true" style="display:none">
+      <a href="/best/most-installed-extensions">Most Installed VS Code Extensions</a>
+      <a href="/best/trending-extensions-this-week">Trending VS Code Extensions This Week</a>
+      <a href="/best/top-rated-extensions">Highest-Rated VS Code Extensions</a>
+      <a href="/best/best-python-extensions">Best VS Code Extensions for Python</a>
+      <a href="/best/best-linter-extensions">Best Linter Extensions for VS Code</a>
+      <a href="/best/best-formatter-extensions">Best Formatter Extensions for VS Code</a>
+    </nav>
+    <div id="prerender-list"><!-- PRERENDER:list-body --><!-- /PRERENDER:list-body --></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -560,6 +560,12 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <a
+              href="/best/most-installed-extensions"
+              className="hover:text-indigo-400 transition-colors"
+            >
+              Best Extensions
+            </a>
+            <a
               href="https://marketplace.visualstudio.com"
               target="_blank"
               rel="noopener noreferrer"

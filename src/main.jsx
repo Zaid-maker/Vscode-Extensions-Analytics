@@ -13,9 +13,22 @@ import '@fontsource/jetbrains-mono/500.css'
 import '@fontsource/jetbrains-mono/600.css'
 import './index.css'
 import App from './App.jsx'
+import { COLLECTIONS } from './data/collections.js'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// Prerendered /best/<slug> collection pages are complete static documents —
+// mounting the app over them would swap the listicle visitors came for back
+// to the homepage UI. Known slugs stay static (trailing slash tolerated —
+// local static servers keep it, Vercel's trailingSlash:false redirects it);
+// unknown ones fall through to the app, which handles them as a friendly
+// redirect to the homepage.
+const path = window.location.pathname.replace(/\/+$/, '') || '/'
+const isStaticCollectionPage =
+  path.startsWith('/best/') && COLLECTIONS.some((c) => `/best/${c.slug}` === path)
+
+if (!isStaticCollectionPage) {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+}

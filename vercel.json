@@ -4,6 +4,10 @@
     {
       "source": "/extension/:path*",
       "destination": "/index.html"
+    },
+    {
+      "source": "/best/:path*",
+      "destination": "/index.html"
     }
   ]
 }

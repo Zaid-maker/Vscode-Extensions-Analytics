@@ -29,6 +29,10 @@ const SITEMAP = join(ROOT, 'public', 'sitemap.xml');
 // a route missing here silently keeps a stale date.
 const ROUTES = [
   { loc: 'https://vscode-extensions-analytics.vercel.app/', paths: ['src', 'index.html', 'package-lock.json', 'scripts/update-sitemap.mjs'] },
+  // NOTE: /extension/ and /best/ URLs are NOT listed here — their lastmod is
+  // stamped by the postbuild prerenderers (extension last-updated dates and
+  // build date respectively), which is fresher and more accurate than any
+  // git-derived date for those sections.
 ];
 
 function git(args) {

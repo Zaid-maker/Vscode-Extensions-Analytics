@@ -7,7 +7,7 @@
     "dev": "vite",
     "prebuild": "node scripts/update-sitemap.mjs",
     "build": "vite build",
-    "postbuild": "node scripts/prerender-extension-pages.mjs",
+    "postbuild": "node scripts/prerender-extension-pages.mjs && node scripts/prerender-collection-pages.mjs",
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
