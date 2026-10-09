@@ -49,7 +49,8 @@ function ChartLoader() {
     </div>
   );
 }
-import { getExtensionDetails } from '../services/marketplaceApi';
+import { getExtensionDetails, searchExtensions, SortBy } from '../services/marketplaceApi';
+import { extensionUrl } from '../lib/routes';
 import LazyErrorBoundary from './LazyErrorBoundary';
 
 export default function ExtensionDetailModal({
@@ -60,12 +61,14 @@ export default function ExtensionDetailModal({
   isWatchlisted,
   onWatchlistToggle,
   onSelectPublisher,
+  onRelatedSelect,
 }) {
   const [detailedExtension, setDetailedExtension] = useState(null);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'growth' | 'releases' | 'badges'
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [copiedCmd, setCopiedCmd] = useState(false);
   const [copiedBadge, setCopiedBadge] = useState(null);
+  const [copiedShare, setCopiedShare] = useState(false);
 
   // Fetch full details (with all versions and metadata flags)
   useEffect(() => {
@@ -89,6 +92,53 @@ export default function ExtensionDetailModal({
       isMounted = false;
     };
   }, [initialExtension?.id]);
+
+  // Related extensions: same first category, sorted by installs, top 6,
+  // current one filtered out. Cached like every other marketplace query.
+  // State is keyed by extension id so a stale fetch can never render for a
+  // different extension; setters fire only from async callbacks.
+  const [relatedState, setRelatedState] = useState({ id: null, loading: false, items: [] });
+  const relatedCategoryId = initialExtension?.categories?.[0] || null;
+  useEffect(() => {
+    if (!relatedCategoryId) return undefined;
+    let isMounted = true;
+    const requestedId = initialExtension?.id;
+    searchExtensions({
+      category: relatedCategoryId,
+      sortBy: SortBy.INSTALL_COUNT,
+      pageSize: 7,
+    })
+      .then(({ extensions = [] }) => {
+        if (isMounted) {
+          setRelatedState({
+            id: requestedId,
+            loading: false,
+            items: extensions.filter((e) => e.id !== requestedId).slice(0, 6),
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Related fetch failed:', err);
+        if (isMounted) setRelatedState({ id: requestedId, loading: false, items: [] });
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [relatedCategoryId, initialExtension?.id]);
+  const related = relatedState.id === initialExtension?.id ? relatedState.items : [];
+  const loadingRelated = relatedState.id === initialExtension?.id ? relatedState.loading : Boolean(relatedCategoryId);
+
+  // Esc closes the modal; focus lands on the container so the listener is
+  // deterministic rather than depending on what the user last clicked.
+  const containerRef = React.useRef(null);
+  useEffect(() => {
+    containerRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   // Derived extension object that prioritizes non-zero stats
   const extension = detailedExtension?.id === initialExtension?.id
@@ -129,8 +179,21 @@ export default function ExtensionDetailModal({
     setTimeout(() => setCopiedBadge(null), 2000);
   };
 
+  const handleCopyShare = () => {
+    navigator.clipboard.writeText(extensionUrl(extension.id));
+    setCopiedShare(true);
+    setTimeout(() => setCopiedShare(false), 2000);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+    <div
+      ref={containerRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${extension.displayName} details`}
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 outline-none"
+    >
       <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Modal Top Banner */}
         <div
@@ -258,6 +321,29 @@ export default function ExtensionDetailModal({
                 <>
                   <Bookmark className="w-3.5 h-3.5" />
                   <span>Watchlist</span>
+                </>
+              )}
+            </button>
+
+            {/* Share: copies the shareable /extension/<id> URL */}
+            <button
+              onClick={handleCopyShare}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium transition-all ${
+                copiedShare
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                  : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
+              }`}
+              title="Copy shareable link"
+            >
+              {copiedShare ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Link Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Share</span>
                 </>
               )}
             </button>
@@ -431,6 +517,48 @@ export default function ExtensionDetailModal({
                     ))}
                   </div>
                 )}
+
+                {/* Related extensions: same category, ranked by installs */}
+                <div className="pt-6 border-t border-slate-800/80">
+                  <h3 className="flex items-center gap-2 text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                    Related in {extension.categories?.[0]}
+                  </h3>
+                  {loadingRelated ? (
+                    <div className="flex items-center gap-2 text-xs text-slate-500 py-2">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                      Loading related extensions…
+                    </div>
+                  ) : related.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {related.map((rel) => (
+                        <button
+                          key={rel.id}
+                          onClick={() => onRelatedSelect?.(rel)}
+                          className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-800 bg-slate-950/40 hover:border-indigo-500/60 hover:bg-slate-900 transition-all text-left group/rel"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-slate-800 p-1.5 shrink-0">
+                            {rel.icon ? (
+                              <img src={rel.icon} alt="" className="w-full h-full object-contain" />
+                            ) : (
+                              <Box className="w-full h-full text-slate-500" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-slate-200 truncate group-hover/rel:text-indigo-300 transition-colors">
+                              {rel.displayName}
+                            </div>
+                            <div className="text-[10px] font-mono text-slate-500 truncate">
+                              {formatNumber(rel.stats?.installs)} installs
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">No related extensions found in this category.</p>
+                  )}
+                </div>
               </div>
             </div>
           )}

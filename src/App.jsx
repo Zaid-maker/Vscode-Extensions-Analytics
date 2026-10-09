@@ -544,6 +544,7 @@ export default function App() {
             setSelectedPublisher(pubName);
             setActiveTab('publishers');
           }}
+          onRelatedSelect={openExtension}
           />
           </Suspense>
         </LazyErrorBoundary>
