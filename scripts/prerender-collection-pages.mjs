@@ -94,8 +94,17 @@ ${items}
 
 function renderPage(collection, extensions, template) {
   const url = `${SITE_URL}/best/${collection.slug}`;
-  const title = `${collection.heading} | ExtensionPulse`;
-  const description = truncate(collection.intro, 160);
+  const year = new Date().getFullYear();
+  // seoTitle/seoDescription are dedicated SERP copy (keyword-front-loaded,
+  // self-contained) — distinct from the on-page heading/intro, which can read
+  // more naturally. Falls back to the heading for older collection defs.
+  const title = collection.seoTitle
+    ? collection.seoTitle.replaceAll('{year}', year)
+    : `${collection.heading} | ExtensionPulse`;
+  const description = truncate(
+    (collection.seoDescription || collection.intro).replaceAll('{year}', year),
+    158
+  );
 
   const jsonLd = {
     '@context': 'https://schema.org',
