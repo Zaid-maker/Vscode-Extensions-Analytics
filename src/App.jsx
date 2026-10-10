@@ -221,25 +221,20 @@ export default function App() {
   // the homepage view (history.back when we pushed, else canonical home).
   useEffect(() => {
     if (!initialExtensionId || deepLinkAttemptedRef.current) return;
-    let cancelled = false;
     getExtensionDetails(initialExtensionId)
       .then((ext) => {
         // Guard set on resolution, not on entry, so StrictMode's dev
         // double-mount gets a second fetch instead of a dead first one
         if (deepLinkAttemptedRef.current) return;
+        deepLinkAttemptedRef.current = true;
         if (ext) {
-          deepLinkAttemptedRef.current = true;
           setSelectedExtension(ext);
         } else {
-          deepLinkAttemptedRef.current = true;
           // Unknown extension — don't strand the user on a URL that renders nothing
           window.history.replaceState({}, '', '/');
         }
       })
       .catch((err) => console.warn('Deep-link fetch failed:', err));
-    return () => {
-      cancelled = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -294,18 +289,13 @@ export default function App() {
       .finally(() => setIsRefreshing(false));
   };
 
-  // Compare toggling
+  // Compare toggling: up to 4 slots; adding a 5th replaces the oldest
   const handleCompareToggle = (ext) => {
     setComparedExtensions((prev) => {
-      const exists = prev.some((e) => e.id === ext.id);
-      if (exists) {
+      if (prev.some((e) => e.id === ext.id)) {
         return prev.filter((e) => e.id !== ext.id);
       }
-      if (prev.length >= 4) {
-        // Replace oldest or alert
-        return [...prev.slice(1), ext];
-      }
-      return [...prev, ext];
+      return prev.length >= 4 ? [...prev.slice(1), ext] : [...prev, ext];
     });
   };
 
@@ -484,13 +474,7 @@ export default function App() {
               setComparedExtensions((prev) => prev.filter((e) => e.id !== id))
             }
             onClearCompare={() => setComparedExtensions([])}
-            onAddExtensionById={(ext) => {
-              if (!comparedExtensions.some((e) => e.id === ext.id)) {
-                setComparedExtensions((prev) =>
-                  prev.length >= 4 ? [...prev.slice(1), ext] : [...prev, ext]
-                );
-              }
-            }}
+            onAddExtensionById={handleCompareToggle}
             onSelectExtension={openExtension}
           />
             </Suspense>
