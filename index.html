@@ -104,20 +104,50 @@
       #prerender-list .desc { color: #94a3b8; font-size: .85rem; }
       #prerender-list li a:hover .name { color: #a5b4fc; }
       body:has(#root:not(:empty)) #prerender-list { display: none; }
+      /* Home/collection pre-hydration nav: VISIBLE in raw HTML and visible to
+         no-JS users until React mounts. Replaces the old permanently-hidden
+         nav (display:none links are discounted by search engines, which left
+         unindexed pages with zero internal-link signals). */
+      .prerender-nav { max-width: 52rem; margin: 0 auto; padding: 1.75rem 1.25rem 0; font-family: system-ui, sans-serif; line-height: 1.6; }
+      .prerender-nav h2 { font-size: 1rem; margin: 0 0 .5rem; color: #e2e8f0; }
+      .prerender-nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: .25rem .9rem; padding: 0; margin: 0 0 1.25rem; }
+      .prerender-nav a { color: #818cf8; text-decoration: underline; }
+      .prerender-nav a:hover { color: #a5b4fc; }
+      /* Extension-page static fallback body (filled by
+         scripts/prerender-extension-pages.mjs, which also removes the
+         wrapper's inline display:none on extension pages only). */
+      #prerender-ext main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 1.25rem 3rem; font-family: system-ui, sans-serif; line-height: 1.6; }
+      #prerender-ext h1 { font-size: 1.6rem; line-height: 1.3; margin: 0 0 .5rem; color: #e2e8f0; }
+      #prerender-ext .meta { color: #94a3b8; margin: 0 0 .3rem; }
+      #prerender-ext .stats { color: #818cf8; font-size: .9rem; margin: 0 0 1rem; }
+      #prerender-ext .desc { color: #94a3b8; margin: 0 0 .75rem; }
+      #prerender-ext h2 { font-size: 1.02rem; margin: 1.4rem 0 .4rem; color: #e2e8f0; }
+      #prerender-ext ul { list-style: none; display: flex; flex-wrap: wrap; gap: .25rem .9rem; padding: 0; margin: 0; }
+      #prerender-ext a { color: #818cf8; text-decoration: underline; }
+      #prerender-ext .tags span { display: inline-block; border: 1px solid #1e293b; border-radius: .4rem; padding: .05rem .5rem; font-size: .78rem; color: #94a3b8; margin: 0 .3rem .3rem 0; }
+      #prerender-ext .cta { margin-top: 1.5rem; }
+      body:has(#root:not(:empty)) .prerender-nav,
+      body:has(#root:not(:empty)) #prerender-ext { display: none; }
     </style>
   </head>
   <body class="bg-[#0b0f17] text-slate-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white">
-    <!-- Static crawlable nav (hidden once CSS loads): links the prerendered
-         listicle pages from the homepage's raw HTML for crawlers and no-JS. -->
-    <nav aria-hidden="true" style="display:none">
-      <a href="/best/most-installed-extensions">Most Installed VS Code Extensions</a>
-      <a href="/best/trending-extensions-this-week">Trending VS Code Extensions This Week</a>
-      <a href="/best/top-rated-extensions">Highest-Rated VS Code Extensions</a>
-      <a href="/best/best-python-extensions">Best VS Code Extensions for Python</a>
-      <a href="/best/best-linter-extensions">Best Linter Extensions for VS Code</a>
-      <a href="/best/best-formatter-extensions">Best Formatter Extensions for VS Code</a>
+    <!-- Static crawlable nav: VISIBLE in raw HTML (crawlable links to the
+         prerendered pages) and visible to no-JS users until React mounts. -->
+    <nav class="prerender-nav" aria-label="Popular VS Code extensions and collections">
+      <h2>Popular VS Code extensions</h2>
+      <ul id="home-ext-links"><!-- PRERENDER:home-links --><!-- /PRERENDER:home-links --></ul>
+      <h2>Collections</h2>
+      <ul>
+        <li><a href="/best/most-installed-extensions">Most Installed VS Code Extensions</a></li>
+        <li><a href="/best/trending-extensions-this-week">Trending VS Code Extensions This Week</a></li>
+        <li><a href="/best/top-rated-extensions">Highest-Rated VS Code Extensions</a></li>
+        <li><a href="/best/best-python-extensions">Best VS Code Extensions for Python</a></li>
+        <li><a href="/best/best-linter-extensions">Best Linter Extensions for VS Code</a></li>
+        <li><a href="/best/best-formatter-extensions">Best Formatter Extensions for VS Code</a></li>
+      </ul>
     </nav>
     <div id="prerender-list"><!-- PRERENDER:list-body --><!-- /PRERENDER:list-body --></div>
+    <div id="prerender-ext" style="display:none"><!-- PRERENDER:ext-body --><!-- /PRERENDER:ext-body --></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
