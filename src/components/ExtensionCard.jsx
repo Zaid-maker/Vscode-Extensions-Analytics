@@ -17,6 +17,7 @@ import {
   formatTrendPercent,
 } from '../utils/formatters';
 import { extensionPath } from '../lib/routes';
+import MaintenanceBadge from './MaintenanceBadge';
 
 export default function ExtensionCard({
   extension,
@@ -117,6 +118,8 @@ export default function ExtensionCard({
                   <BadgeCheck className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                 </span>
               )}
+              <span className="text-slate-600">•</span>
+              <MaintenanceBadge lastUpdated={extension.lastUpdated} />
               <span className="text-slate-600">•</span>
               <span className="font-mono text-[11px] text-slate-400">
                 v{extension.latestVersion}

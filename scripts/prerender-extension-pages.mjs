@@ -20,7 +20,8 @@ import { fileURLToPath } from 'url';
 import { POPULAR_SEARCH_TAGS } from '../src/data/presets.js';
 import { COLLECTIONS } from '../src/data/collections.js';
 import { normalizeExtension, FilterType, Flags } from '../src/services/marketplaceApi.js';
-import { extensionUrl, extensionPath } from '../src/lib/routes.js';
+import { extensionUrl, extensionPath, publisherPath } from '../src/lib/routes.js';
+import { maintenanceStatus, maintenanceMeta, MAINTENANCE_STATUS } from '../src/utils/maintenance.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATE = join(ROOT, 'dist', 'index.html');
@@ -76,10 +77,24 @@ function renderExtensionBody(ext, allIds) {
     formatDate(ext.lastUpdated) ? `updated ${formatDate(ext.lastUpdated)}` : null,
   ].filter(Boolean).join(' · ');
 
+  // Maintenance signal: same thresholds the interactive app shows.
+  const status = maintenanceStatus(ext.lastUpdated);
+  const maintenance = maintenanceMeta(status);
+  const maintenanceLine = maintenance
+    ? `\n        <p class="maintenance"><span style="color:${maintenance.color}">●</span> ${escapeHtml(maintenance.label.toLowerCase())} — ${escapeHtml(maintenance.hint.toLowerCase())}.</p>`
+    : '';
+
+  // When updates stop coming, point maintenance-minded visitors somewhere
+  // worth crawling instead of leaving a dead end.
+  const alternatives =
+    status === MAINTENANCE_STATUS.STALE || status === MAINTENANCE_STATUS.ABANDONED
+      ? `<p class="alt">Not updated recently? Check <a href="/best/recently-updated-extensions">the most recently updated VS Code extensions</a> or <a href="/best/top-rated-extensions">the highest-rated picks</a> as active-maintenance alternatives.</p>`
+      : '';
+
   return `${EXT_SLICE_START}<main>
         <h1>${escapeHtml(ext.displayName)} — VS Code extension analytics</h1>
-        <p class="meta">By ${escapeHtml(ext.publisher.displayName)} · ID ${escapeHtml(ext.id)}</p>
-        <p class="stats">${escapeHtml(stats)}</p>
+        <p class="meta">By <a href="${publisherPath(ext.publisher.name || '')}">${escapeHtml(ext.publisher.displayName)}</a> · ID ${escapeHtml(ext.id)}</p>
+        <p class="stats">${escapeHtml(stats)}</p>${maintenanceLine}
         <p class="desc">${escapeHtml(ext.description || '')}</p>
         <div class="tags">${tags}</div>
         <h2>Compare ${escapeHtml(ext.displayName)} with other extensions</h2>
@@ -89,7 +104,7 @@ ${siblings}
         <h2>Curated VS Code extension collections</h2>
         <ul class="collections">
 ${collections}
-        </ul>
+        </ul>${alternatives ? '\n        ' + alternatives : ''}
         <p class="cta"><a href="/">Open ${escapeHtml(ext.displayName)} in ExtensionPulse for live download trends →</a></p>
       </main>${EXT_SLICE_END}`;
 }

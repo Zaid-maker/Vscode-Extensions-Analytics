@@ -143,7 +143,9 @@ export function normalizeExtension(raw) {
     targetPlatform: v.targetPlatform || 'universal',
     assetUri: v.assetUri,
     filesCount: v.files?.length || 0,
-    properties: (v.properties || []).reduce((acc, p) => {
+    // Some versions come back with non-array or missing `properties`
+    // (notably lightweight publishers) — guard instead of crashing.
+    properties: (Array.isArray(v.properties) ? v.properties : []).reduce((acc, p) => {
       acc[p.key] = p.value;
       return acc;
     }, {}),
@@ -170,7 +172,7 @@ export function normalizeExtension(raw) {
     (f) => f.assetType === 'Microsoft.VisualStudio.Services.VSIXPackage'
   );
 
-  const props = latestVersionObj.properties || [];
+  const props = Array.isArray(latestVersionObj.properties) ? latestVersionObj.properties : [];
   const propsMap = {};
   props.forEach((p) => {
     if (p && p.key) propsMap[p.key] = p.value;
@@ -406,7 +408,13 @@ export async function getPublisherExtensions(publisherName, pageSize = 50) {
       {
         criteria: [
           { filterType: FilterType.TARGET, value: 'Microsoft.VisualStudio.Code' },
-          { filterType: FilterType.SEARCH_TEXT, value: `publisher:${publisherName}` },
+          // Query by the publisher's machine id rather than the `publisher:`
+          // search token, which only matches the publisher's DISPLAY name —
+          // ids like 'esbenp' (Prettier), 'eamodio' (GitKraken),
+          // 'charliermarsh' (Astral) and 'PKief' (Philipp Kief) all returned
+          // 0 results through the token. The exact-publisher filter below
+          // keeps only the target publisher's own extensions.
+          { filterType: FilterType.SEARCH_TEXT, value: publisherName },
         ],
         pageNumber: 1,
         pageSize,
@@ -421,8 +429,8 @@ export async function getPublisherExtensions(publisherName, pageSize = 50) {
   // Filter accurately by exact publisher name match
   const filtered = res.extensions.filter(
     (ext) =>
-      ext.publisher.name.toLowerCase() === publisherName.toLowerCase() ||
-      ext.publisher.displayName.toLowerCase() === publisherName.toLowerCase()
+      (ext.publisher?.name || '').toLowerCase() === publisherName.toLowerCase() ||
+      (ext.publisher?.displayName || '').toLowerCase() === publisherName.toLowerCase()
   );
 
   return filtered.length > 0 ? filtered : res.extensions;

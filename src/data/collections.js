@@ -75,6 +75,18 @@ export const COLLECTIONS = [
     pageSize: 10,
   },
   {
+    slug: 'recently-updated-extensions',
+    heading: 'The 20 Most Recently Updated VS Code Extensions',
+    seoTitle: '20 Latest Updated VS Code Extensions ({year}) — Ranked Live',
+    seoDescription:
+      'The most-freshly-updated VS Code extensions of {year}, ranked live by latest release date straight from the Marketplace — the hidden gems that keep improving.',
+    intro:
+      'Ranked by the Marketplace\'s latest-version date at build time, straight from its own "recently updated" ordering. An update alone isn\'t proof of quality, but extensions that keep shipping tend to be the ones getting better — cross-check picks against the highest-rated list.',
+    category: null,
+    sortBy: 12, // SortBy.LAST_UPDATED
+    pageSize: 20,
+  },
+  {
     slug: 'best-formatter-extensions',
     heading: 'The 10 Best Formatter Extensions for VS Code',
     seoTitle: '10 Best Formatter Extensions for VS Code ({year}) — Ranked Live',

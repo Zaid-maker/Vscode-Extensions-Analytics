@@ -125,9 +125,25 @@
       #prerender-ext ul { list-style: none; display: flex; flex-wrap: wrap; gap: .25rem .9rem; padding: 0; margin: 0; }
       #prerender-ext a { color: #818cf8; text-decoration: underline; }
       #prerender-ext .tags span { display: inline-block; border: 1px solid #1e293b; border-radius: .4rem; padding: .05rem .5rem; font-size: .78rem; color: #94a3b8; margin: 0 .3rem .3rem 0; }
+      #prerender-ext .maintenance { font-size: .82rem; color: #94a3b8; margin: 0 0 .75rem; }
+      #prerender-ext .alt { font-size: .85rem; color: #94a3b8; margin: 1rem 0 0; }
       #prerender-ext .cta { margin-top: 1.5rem; }
+      /* Publisher-page static fallback body (filled by
+         scripts/prerender-publisher-pages.mjs, which also removes the
+         wrapper's inline display:none on publisher pages only). */
+      #prerender-publisher main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 1.25rem 3rem; font-family: system-ui, sans-serif; line-height: 1.6; }
+      #prerender-publisher h1 { font-size: 1.6rem; line-height: 1.3; margin: 0 0 .5rem; color: #e2e8f0; }
+      #prerender-publisher .meta { color: #94a3b8; margin: 0 0 1rem; }
+      #prerender-publisher .kpis { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; padding: 0; margin: 0 0 1.25rem; color: #818cf8; font-size: .9rem; }
+      #prerender-publisher h2 { font-size: 1.02rem; margin: 1.4rem 0 .4rem; color: #e2e8f0; }
+      #prerender-publisher table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+      #prerender-publisher th { text-align: left; color: #94a3b8; font-weight: 500; padding: .4rem .5rem; border-bottom: 1px solid #1e293b; }
+      #prerender-publisher td { padding: .4rem .5rem; border-bottom: 1px solid #1e293b; color: #94a3b8; }
+      #prerender-publisher td a { color: #818cf8; }
+      #prerender-publisher .cta { margin-top: 1.5rem; }
       body:has(#root:not(:empty)) .prerender-nav,
-      body:has(#root:not(:empty)) #prerender-ext { display: none; }
+      body:has(#root:not(:empty)) #prerender-ext,
+      body:has(#root:not(:empty)) #prerender-publisher { display: none; }
     </style>
   </head>
   <body class="bg-[#0b0f17] text-slate-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white">
@@ -141,13 +157,26 @@
         <li><a href="/best/most-installed-extensions">Most Installed VS Code Extensions</a></li>
         <li><a href="/best/trending-extensions-this-week">Trending VS Code Extensions This Week</a></li>
         <li><a href="/best/top-rated-extensions">Highest-Rated VS Code Extensions</a></li>
+        <li><a href="/best/recently-updated-extensions">Recently Updated VS Code Extensions</a></li>
         <li><a href="/best/best-python-extensions">Best VS Code Extensions for Python</a></li>
         <li><a href="/best/best-linter-extensions">Best Linter Extensions for VS Code</a></li>
         <li><a href="/best/best-formatter-extensions">Best Formatter Extensions for VS Code</a></li>
       </ul>
+      <h2>Publisher analytics</h2>
+      <ul>
+        <li><a href="/publisher/Microsoft">Microsoft Extensions</a></li>
+        <li><a href="/publisher/GitHub">GitHub Extensions</a></li>
+        <li><a href="/publisher/redhat">Red Hat Extensions</a></li>
+        <li><a href="/publisher/esbenp">Prettier Team Extensions</a></li>
+        <li><a href="/publisher/eamodio">eamodio (GitLens) Extensions</a></li>
+        <li><a href="/publisher/charliermarsh">Astral (Ruff) Extensions</a></li>
+        <li><a href="/publisher/biomejs">Biome Extensions</a></li>
+        <li><a href="/publisher/PKief">Philipp Kief Extensions</a></li>
+      </ul>
     </nav>
     <div id="prerender-list"><!-- PRERENDER:list-body --><!-- /PRERENDER:list-body --></div>
     <div id="prerender-ext" style="display:none"><!-- PRERENDER:ext-body --><!-- /PRERENDER:ext-body --></div>
+    <div id="prerender-publisher" style="display:none"><!-- PRERENDER:pub-body --><!-- /PRERENDER:pub-body --></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

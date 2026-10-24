@@ -7,6 +7,15 @@
 
 export const SITE_URL = 'https://vscode-extensions-analytics.vercel.app';
 export const EXTENSION_PATH_PREFIX = '/extension/';
+export const PUBLISHER_PATH_PREFIX = '/publisher/';
+
+export function publisherPath(publisherName) {
+  return `${PUBLISHER_PATH_PREFIX}${encodeURIComponent(publisherName)}`;
+}
+
+export function publisherUrl(publisherName) {
+  return `${SITE_URL}${publisherPath(publisherName)}`;
+}
 
 export function extensionPath(extensionId) {
   return `${EXTENSION_PATH_PREFIX}${encodeURIComponent(extensionId)}`;

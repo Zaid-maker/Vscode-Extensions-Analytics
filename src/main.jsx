@@ -21,11 +21,18 @@ import { COLLECTIONS } from './data/collections.js'
 // local static servers keep it, Vercel's trailingSlash:false redirects it);
 // unknown ones fall through to the app, which handles them as a friendly
 // redirect to the homepage.
+//
+// Prerendered /publisher/<name> pages follow the same principle. The check
+// is content-based (the prerenderer fills #prerender-publisher with a <main>)
+// rather than name-based, so unknown publisher URLs still mount the app and
+// redirect home instead of showing a blank shell.
 const path = window.location.pathname.replace(/\/+$/, '') || '/'
 const isStaticCollectionPage =
   path.startsWith('/best/') && COLLECTIONS.some((c) => `/best/${c.slug}` === path)
+const isStaticPublisherPage =
+  path.startsWith('/publisher/') && Boolean(document.querySelector('#prerender-publisher main'))
 
-if (!isStaticCollectionPage) {
+if (!isStaticCollectionPage && !isStaticPublisherPage) {
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <App />

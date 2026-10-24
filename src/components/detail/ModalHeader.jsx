@@ -19,6 +19,7 @@ import {
 import { formatRelativeDate } from '../../utils/formatters';
 import { generateCliCommand } from '../../utils/badges';
 import useCopyConfirmation from './useCopyConfirmation';
+import MaintenanceBadge from '../MaintenanceBadge';
 
 export default function ModalHeader({
   extension,
@@ -103,6 +104,7 @@ export default function ModalHeader({
               <Clock className="w-3 h-3 text-slate-400" />
               Updated {formatRelativeDate(extension.lastUpdated)}
             </span>
+            <MaintenanceBadge lastUpdated={extension.lastUpdated} />
           </div>
         </div>
       </div>
