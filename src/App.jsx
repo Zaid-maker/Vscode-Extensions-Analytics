@@ -362,11 +362,6 @@ export default function App() {
               isLoading={isLoading}
             />
 
-            <AdSlot
-              className="mt-6 mb-4"
-              label="Sponsored"
-            />
-
             {/* Filter & Search Bar */}
             <FilterBar
               searchQuery={searchQuery}
@@ -419,27 +414,39 @@ export default function App() {
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {extensions.map((ext) => (
-                  <ExtensionCard
-                    key={ext.id}
-                    extension={ext}
-                    onSelect={openExtension}
-                    onCompareToggle={handleCompareToggle}
-                    isCompared={comparedIds.includes(ext.id)}
-                    isWatchlisted={watchlistedIds.includes(ext.id)}
-                    onWatchlistToggle={handleWatchlistToggle}
-                  />
+                {extensions.map((ext, index) => (
+                  <React.Fragment key={ext.id}>
+                    <ExtensionCard
+                      extension={ext}
+                      onSelect={openExtension}
+                      onCompareToggle={handleCompareToggle}
+                      isCompared={comparedIds.includes(ext.id)}
+                      isWatchlisted={watchlistedIds.includes(ext.id)}
+                      onWatchlistToggle={handleWatchlistToggle}
+                    />
+                    {index === 0 && (
+                      <AdSlot
+                        className="ad-slot-grid-item col-span-1 sm:col-span-2 lg:col-span-2"
+                        label="Sponsored"
+                      />
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
             ) : (
-              <ExtensionTable
-                extensions={extensions}
-                onSelect={openExtension}
-                onCompareToggle={handleCompareToggle}
-                comparedIds={comparedIds}
-                watchlistedIds={watchlistedIds}
-                onWatchlistToggle={handleWatchlistToggle}
-              />
+              <>
+                <ExtensionTable
+                  extensions={extensions}
+                  onSelect={openExtension}
+                  onCompareToggle={handleCompareToggle}
+                  comparedIds={comparedIds}
+                  watchlistedIds={watchlistedIds}
+                  onWatchlistToggle={handleWatchlistToggle}
+                />
+                <div className="mt-4">
+                  <AdSlot label="Sponsored" />
+                </div>
+              </>
             )}
 
             {/* Pagination / Load More Button */}

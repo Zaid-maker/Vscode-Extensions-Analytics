@@ -168,7 +168,7 @@ VITE_ADSTERRA_SCRIPT_URL="https://your-adsterra-script-url"
 VITE_ADSTERRA_SLOT_ID="container-id-from-the-adsterra-code"
 ```
 
-Use the script URL from the Adsterra `<script src="...">` and the ID from its target `<div id="...">`. The ID may be entered with or without the `container-` prefix. The app creates the target container before loading the async script. Set `VITE_ENABLE_ADS=false` to disable ads.
+Use the script URL from the Adsterra `<script src="...">` and the ID from its target `<div id="...">`. The ID may be entered with or without the `container-` prefix. The app creates the target container before loading the async script. In grid view, the ad follows the first extension card, spanning two columns on larger screens and stacking below it on mobile; in table view, it appears after the table. Set `VITE_ENABLE_ADS=false` to disable ads.
 
 Vite `VITE_` variables are included in browser code; only use them for public ad placement configuration, never passwords or private credentials.
 
