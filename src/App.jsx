@@ -4,6 +4,7 @@ import MetricCards from './components/MetricCards';
 import FilterBar from './components/FilterBar';
 import ExtensionCard from './components/ExtensionCard';
 import ExtensionTable from './components/ExtensionTable';
+import AdSlot from './components/AdSlot';
 import LazyErrorBoundary from './components/LazyErrorBoundary';
 
 // Code-split heavy, conditionally-rendered views so recharts & co. only load
@@ -359,6 +360,11 @@ export default function App() {
               extensions={extensions}
               totalCount={totalCount}
               isLoading={isLoading}
+            />
+
+            <AdSlot
+              className="mt-6 mb-4"
+              label="Sponsored"
             />
 
             {/* Filter & Search Bar */}

@@ -156,6 +156,24 @@ No setup needed — the production app is hosted at **[https://vscode-extensions
 
 ---
 
+## 💰 Monetization (Adsterra-ready)
+
+This app includes an `AdSlot` component for Adsterra's script-and-container embed.
+
+Create a `.env` file in the project root with:
+
+```bash
+VITE_ENABLE_ADS=true
+VITE_ADSTERRA_SCRIPT_URL="https://your-adsterra-script-url"
+VITE_ADSTERRA_SLOT_ID="container-id-from-the-adsterra-code"
+```
+
+Use the script URL from the Adsterra `<script src="...">` and the ID from its target `<div id="...">`. The ID may be entered with or without the `container-` prefix. The app creates the target container before loading the async script. Set `VITE_ENABLE_ADS=false` to disable ads.
+
+Vite `VITE_` variables are included in browser code; only use them for public ad placement configuration, never passwords or private credentials.
+
+---
+
 ## 🌐 API & Architecture Details
 
 The tool directly interfaces with the **Visual Studio Code Marketplace Gallery Query API**:

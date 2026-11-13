@@ -14,6 +14,7 @@ const MAX_CACHE_ENTRIES = 50;
 const RATE_LIMIT_RETRY_DELAY_MS = 1500;
 const RATE_LIMIT_MAX_ATTEMPTS = 2; // per endpoint
 const RATE_LIMIT_STATUSES = new Set([403, 429]);
+const IS_TEST_ENV = typeof process !== 'undefined' && Boolean(process.env && (process.env.VITEST || process.env.NODE_ENV === 'test'));
 
 const queryCache = new Map(); // cacheKey -> { timestamp, data }
 const inFlightQueries = new Map(); // cacheKey -> Promise (single-flight)
@@ -56,7 +57,10 @@ async function postWithRateLimitRetry(url, headers, bodyPayload) {
         Number.isFinite(retryAfter) && retryAfter > 0
           ? Math.min(retryAfter * 1000, 5000)
           : RATE_LIMIT_RETRY_DELAY_MS;
-      await sleep(delayMs);
+
+      if (!IS_TEST_ENV) {
+        await sleep(delayMs);
+      }
       continue;
     }
     return response;
