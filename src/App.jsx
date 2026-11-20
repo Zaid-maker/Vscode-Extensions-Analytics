@@ -384,34 +384,44 @@ export default function App() {
                 </p>
               </div>
             ) : error ? (
-              <div className="glass-panel p-8 rounded-2xl border border-rose-500/20 text-center space-y-3">
-                <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
-                <h3 className="text-base font-bold text-white">Connection Error</h3>
-                <p className="text-xs text-rose-300 max-w-md mx-auto">{error}</p>
-                <button
-                  onClick={() => loadExtensions(true)}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold"
-                >
-                  Retry Connection
-                </button>
-              </div>
+              <>
+                <div className="glass-panel p-8 rounded-2xl border border-rose-500/20 text-center space-y-3">
+                  <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
+                  <h3 className="text-base font-bold text-white">Connection Error</h3>
+                  <p className="text-xs text-rose-300 max-w-md mx-auto">{error}</p>
+                  <button
+                    onClick={() => loadExtensions(true)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold"
+                  >
+                    Retry Connection
+                  </button>
+                </div>
+                <div className="mt-4">
+                  <AdSlot label="Sponsored" />
+                </div>
+              </>
             ) : extensions.length === 0 ? (
-              <div className="glass-panel p-12 rounded-2xl border border-slate-800 text-center space-y-3">
-                <Layers className="w-10 h-10 text-slate-500 mx-auto" />
-                <h3 className="text-base font-bold text-white">No Extensions Found</h3>
-                <p className="text-xs text-slate-400">
-                  Try adjusting your search terms or selecting a different category.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('All');
-                  }}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold"
-                >
-                  Reset All Filters
-                </button>
-              </div>
+              <>
+                <div className="glass-panel p-12 rounded-2xl border border-slate-800 text-center space-y-3">
+                  <Layers className="w-10 h-10 text-slate-500 mx-auto" />
+                  <h3 className="text-base font-bold text-white">No Extensions Found</h3>
+                  <p className="text-xs text-slate-400">
+                    Try adjusting your search terms or selecting a different category.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('All');
+                    }}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold"
+                  >
+                    Reset All Filters
+                  </button>
+                </div>
+                <div className="mt-4">
+                  <AdSlot label="Sponsored" />
+                </div>
+              </>
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {extensions.map((ext, index) => (
